@@ -41,9 +41,9 @@ class FactorBase(metaclass=abc.ABCMeta):
     def __init__(self, engine, name, description, category, lookback=2):
         self.engine = engine
         self.table_name = name.lower()
-        # temp 时间暂定为20150101
+        # temp 时间暂定为20160101
         #self.date_back_to = '19491001'
-        self.date_back_to = '20150101'
+        self.date_back_to = '20160101'
 
         # 如果因子信息表不存在，则创建因子信息表
         tables = pd.read_sql('SHOW TABLES', engine, index_col='Tables_in_factors')
