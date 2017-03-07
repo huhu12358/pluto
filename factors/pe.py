@@ -18,6 +18,7 @@ class PE(FactorBase):
         -------
         pd.DataFrame : 需要更新的数据，必须包含sid, trade_dt, value三列
         """
+        # todo calculate factor value
         sql = """SELECT S_INFO_WINDCODE sid, TRADE_DT trade_dt, S_VAL_PE value
             FROM mercury.ashare_eod_derivative_indicator WHERE TRADE_DT > {0}""".format(self.date_back_to)
         data = pd.read_sql(sql, self.engine)
@@ -28,5 +29,6 @@ if __name__ == '__main__':
     engine = create_engine(
         "mysql+pymysql://hsquant:hs123456@218.1.122.196:3306/factors?charset=utf8&autocommit=true", echo=False
     )
+    # todo write factor info
     factor = PE(engine, 'PE_HU', 'value factor', 1)
     factor.update()
