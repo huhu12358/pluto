@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 
 from factors_handler import FactorBase
 
-# todo write the documentation of factor calculation
+# write the documentation of factor calculation
 """
 因子描述：收益的120日峰度
 数据调用：mercury.ashare_eod_prices
