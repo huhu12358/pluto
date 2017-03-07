@@ -7,6 +7,7 @@ from math import sqrt
 from factors_handler import FactorBase
 """
 因子描述：20 日收益方差。
+数据调用：mercury.ashare_eod_prices
 计算方法：
 对当前日期之前的20个交易日（包括今日）的收益率计算方差，得到日度方差
 注：因子值为年化后的值，等于日度方差*sqrt(250)。
