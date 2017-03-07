@@ -50,7 +50,7 @@ class VARIANCE20(FactorBase):
 
         df.rename(columns={'y_ret_var':'value'})
 
-        return data
+        return df
 
 if __name__ == '__main__':
     engine = create_engine(
