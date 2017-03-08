@@ -23,7 +23,7 @@ class BETA20(FactorBase):
         -------
         pd.DataFrame : 需要更新的数据，必须包含sid, trade_dt, value三列
         """
-        # todo calculate factor value
+        # calculate factor value
         index = '000906.SH'
         sql = """SELECT S_INFO_WINDCODE sid, TRADE_DT trade_dt, S_DQ_CLOSE close_s
                     FROM mercury.ashare_eod_prices WHERE TRADE_DT > '{0}'""".format(self.date_back_to)
@@ -70,6 +70,6 @@ if __name__ == '__main__':
     engine = create_engine(
         "mysql+pymysql://hsquant:hs123456@218.1.122.196:3306/factors?charset=utf8&autocommit=true", echo=False
     )
-    # todo write factor info
-    factor = BETA20(engine, 'BETA20', '20日beta值，指数使用沪深300指数', 14)
+    # write factor info
+    factor = BETA20(engine, 'BETA20', '20日beta值，指数使用中证800指数', 14)
     factor.update()
