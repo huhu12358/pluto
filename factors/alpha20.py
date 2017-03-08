@@ -25,7 +25,7 @@ class ALPHA20(FactorBase):
         -------
         pd.DataFrame : 需要更新的数据，必须包含sid, trade_dt, value三列
         """
-        # todo calculate factor value
+        # calculate factor value
         index = '000906.SH'
         benchmark = 'CGB1Y.WI'
         sql = """SELECT S_INFO_WINDCODE sid, TRADE_DT trade_dt, S_DQ_CLOSE close_s
