@@ -66,7 +66,7 @@ class ALPHA60(FactorBase):
 
             # rolling计算: 股票与指数收益率协方差/单只股票收益率标准差 -> beta;
             data3 = data2.join(data2_index.set_index('trade_dt'), on='trade_dt', lsuffix='_s', rsuffix='_i')
-            data3 = data3.join(data2_riskfree.set_index('trade_dt'), on='trade_dt', lsuffix='_0', rsuffix='_rf') \
+            data3 = data3.join(data2_riskfree.set_index('trade_dt'), on='trade_dt') \
                 .rename(columns={'sid': 'sid_rf', 'return': 'return_rf'})
             cov = data3['return_s'].rolling(window=window).cov(other=data3['return_i'])
             std = data3[['return_s']].rolling(window=window).std().rename(columns={'return_s': 'std_s'})
