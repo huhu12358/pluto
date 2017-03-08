@@ -154,7 +154,7 @@ print(data5)
 
 
 
-# factors: sharperatio20
+# factors: sharperatio20, sharperatio60, sharperatio120
 # todo select data
 date = '20170101'
 benchmark = 'CGB1Y.WI'
