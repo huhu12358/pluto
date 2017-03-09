@@ -55,6 +55,7 @@ data2 = data1.pct_change()
 dict = {'close':data1, 'return':data2}
 panel = pd.Panel.from_dict(dict)
 
+# 收益率的方差，滚动计算
 panel['ret_var'+str(window)] = panel['return'].rolling(window).var()
 if factor=='VARIANCE':
     r = panel['ret_var' + str(window)].copy()
@@ -62,10 +63,31 @@ if factor=='VARIANCE':
     df = standard_data(r)
     print(df)
 
+# 收益率的峰度，滚动计算
 panel['ret_kurt'+str(window)] = panel['return'].rolling(window).kurt()
-panel['ret_kurt'+str(window)][panel['ret_kurt'+str(window)]>10e10]=np.nan
+
+# 截面去极值
+panel['ret_kurt'+str(window)][abs(panel['ret_kurt'+str(window)])>10e10]=np.nan
 if factor=='KURTOSIS':
     r = panel['ret_kurt' + str(window)].copy()
+    r.drop(remove, axis=1, inplace=True)
+    df = standard_data(r)
+    print(df)
+
+
+# 收益率beta，滚动计算
+# 收益率标准差
+panel['ret_std'+str(window)] = panel['return'].rolling(window).std()
+# 各个股票对benchmark的协方差
+index = panel['return'][benchmark]
+panel['ret_cov'+str(window)] = panel['return'].rolling(window).cov(other=index)
+# BETA
+panel['ret_beta'+str(window)] = panel['ret_cov'+str(window)]/panel['ret_std'+str(window)]
+
+# 截面去极值
+panel['ret_beta'+str(window)][abs(panel['ret_beta'+str(window)])>10e10]=np.nan
+if factor=='BETA':
+    r = panel['ret_beta' + str(window)].copy()
     r.drop(remove, axis=1, inplace=True)
     df = standard_data(r)
     print(df)

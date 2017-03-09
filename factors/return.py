@@ -80,13 +80,29 @@ class RETURN(FactorBase):
         # 收益率的峰度，滚动计算
         panel['ret_kurt' + str(self.window)] = panel['return'].rolling(self.window).kurt()
         # 截面去极值
-        panel['ret_kurt' + str(self.window)][panel['ret_kurt' + str(self.window)] > 10e5] = np.nan
+        panel['ret_kurt' + str(self.window)][abs(panel['ret_kurt' + str(self.window)]) > 10e10] = np.nan
         if self.factor == 'KURTOSIS':
             r = panel['ret_kurt' + str(self.window)].copy()
             r.drop(remove, axis=1, inplace=True)
             df = standard_data(r)
             return df
 
+        # 收益率beta，滚动计算
+        # 收益率标准差，滚动计算
+        panel['ret_std' + str(self.window)] = panel['return'].rolling(self.window).std()
+        # 各个股票对benchmark的协方差，滚动计算
+        index = panel['return'][benchmark]
+        panel['ret_cov' + str(self.window)] = panel['return'].rolling(self.window).cov(other=index)
+        # BETA，滚动计算
+        panel['ret_beta' + str(self.window)] = panel['ret_cov' + str(self.window)] / panel['ret_std' + str(self.window)]
+
+        # 截面去极值
+        panel['ret_beta' + str(self.window)][abs(panel['ret_beta' + str(self.window)]) > 10e10] = np.nan
+        if self.factor == 'BETA':
+            r = panel['ret_beta' + str(self.window)].copy()
+            r.drop(remove, axis=1, inplace=True)
+            df = standard_data(r)
+            return df
 
 
             #return df
@@ -107,15 +123,18 @@ if __name__ == '__main__':
 
     factor_var120 = RETURN(engine, 'VARIANCE20', '120日收益方差', 14, 'VARIANCE',120)
     factor_var120.update()
-"""
+
     # 峰度因子
     factor_kurt20 = RETURN(engine, 'KURTOSIS20', '收益的20日峰度', 14, 'KURTOSIS', 20)
     factor_kurt20.update()
 
-    """
+
     factor_kurt60 = RETURN(engine, 'KURTOSIS20', '收益的60日峰度', 14, 'KURTOSIS', 60)
     factor_kurt60.update()
 
     factor_kurt120 = RETURN(engine, 'KURTOSIS20', '收益的120日峰度', 14, 'KURTOSIS', 120)
     factor_kurt120.update()
 """
+    # BETA因子
+    factor_beta20 = RETURN(engine, 'BETA20', '20日beta值，指数使用中证800指数', 14, 'BETA', 20)
+    factor_beta20.update()
