@@ -27,7 +27,7 @@ def standard_data(r):
 # todo select data
 starttime = '20160101'
 index = '000906.SH'
-benchmark = 'CGB1Y.WI'
+riskfree = 'CGB1Y.WI'
 sql = """SELECT S_INFO_WINDCODE sid, TRADE_DT trade_dt, S_DQ_CLOSE close
             FROM mercury.ashare_eod_prices WHERE TRADE_DT > '{0}'""".format(starttime)
 data = pd.read_sql(sql, engine)
@@ -37,12 +37,12 @@ sql_index = """SELECT S_INFO_WINDCODE sid, TRADE_DT trade_dt, S_DQ_CLOSE close
 data_index = pd.read_sql(sql_index, engine)
 sql_riskfree = """SELECT S_INFO_WINDCODE sid, TRADE_DT trade_dt, S_DQ_CLOSE close
                 FROM wind.CGBBENCHMARK
-                WHERE TRADE_DT > '{0}' AND S_INFO_WINDCODE = '{1}'""".format(starttime, benchmark)
+                WHERE TRADE_DT > '{0}' AND S_INFO_WINDCODE = '{1}'""".format(starttime, riskfree)
 data_riskfree = pd.read_sql(sql_riskfree, engine)
 
 # todo factor calculation
 # 收盘价数据展开与合并
-remove = [index,benchmark]
+remove = [index,riskfree]
 x = pd.pivot_table(data,values='close',index='trade_dt',columns='sid')
 y = pd.pivot_table(data_index,values='close',index='trade_dt',columns='sid')
 z = pd.pivot_table(data_riskfree,values='close',index='trade_dt',columns='sid')
@@ -78,9 +78,9 @@ if factor=='KURTOSIS':
 # 收益率beta，滚动计算
 # 收益率标准差
 panel['ret_std'+str(window)] = panel['return'].rolling(window).std()
-# 各个股票对benchmark的协方差
-index = panel['return'][benchmark]
-panel['ret_cov'+str(window)] = panel['return'].rolling(window).cov(other=index)
+# 各个股票对index的协方差
+index_r = panel['return'][index]
+panel['ret_cov'+str(window)] = panel['return'].rolling(window).cov(other=index_r)
 # BETA
 panel['ret_beta'+str(window)] = panel['ret_cov'+str(window)]/panel['ret_std'+str(window)]
 
@@ -88,6 +88,25 @@ panel['ret_beta'+str(window)] = panel['ret_cov'+str(window)]/panel['ret_std'+str
 panel['ret_beta'+str(window)][abs(panel['ret_beta'+str(window)])>10e10]=np.nan
 if factor=='BETA':
     r = panel['ret_beta' + str(window)].copy()
+    r.drop(remove, axis=1, inplace=True)
+    df = standard_data(r)
+    print(df)
+
+
+# 收益率alpha，滚动计算
+# alpha_J = E(r_s) - [E(r_f) + beta_s_i * (E(r_i) - E(r_f))]
+panel['ret_mean'+str(window)] = panel['return'].rolling(window).mean()
+riskfree_r = panel['return'][riskfree]
+def mul_temp(s):
+    return s*temp
+def add_index_r(s):
+    return s+index_r
+temp = index_r-riskfree_r
+temp = panel['ret_beta'+str(window)].apply(mul_temp,axis=0)
+temp = temp.apply(add_index_r,axis=0)
+panel['ret_alpha'+str(window)] = panel['ret_mean'+str(window)]-temp
+if factor=='ALPHA':
+    r = panel['ret_alpha' + str(window)].copy()
     r.drop(remove, axis=1, inplace=True)
     df = standard_data(r)
     print(df)

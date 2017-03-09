@@ -37,8 +37,9 @@ class RETURN(FactorBase):
         pd.DataFrame : 需要更新的数据，必须包含sid, trade_dt, value三列
         """
         # todo calculate factor value
+        # <editor-fold desc="select data 数据选取部分">
         index = '000906.SH'
-        benchmark = 'CGB1Y.WI'
+        riskfree = 'CGB1Y.WI'
         sql = """SELECT S_INFO_WINDCODE sid, TRADE_DT trade_dt, S_DQ_CLOSE close
                     FROM mercury.ashare_eod_prices WHERE TRADE_DT > '{0}'""".format(self.date_back_to)
         data = pd.read_sql(sql, engine)
@@ -48,13 +49,14 @@ class RETURN(FactorBase):
         data_index = pd.read_sql(sql_index, engine)
         sql_riskfree = """SELECT S_INFO_WINDCODE sid, TRADE_DT trade_dt, S_DQ_CLOSE close
                         FROM wind.CGBBENCHMARK
-                        WHERE TRADE_DT > '{0}' AND S_INFO_WINDCODE = '{1}'""".format(self.date_back_to, benchmark)
+                        WHERE TRADE_DT > '{0}' AND S_INFO_WINDCODE = '{1}'""".format(self.date_back_to, riskfree)
         data_riskfree = pd.read_sql(sql_riskfree, engine)
+        # </editor-fold>
 
         # todo factor calculation
 
         # 收盘价数据展开与合并
-        remove = [index, benchmark]
+        remove = [index, riskfree]
         x = pd.pivot_table(data, values='close', index='trade_dt', columns='sid')
         y = pd.pivot_table(data_index, values='close', index='trade_dt', columns='sid')
         z = pd.pivot_table(data_riskfree, values='close', index='trade_dt', columns='sid')
@@ -88,12 +90,12 @@ class RETURN(FactorBase):
             return df
 
         # 收益率beta，滚动计算
-        # 收益率标准差，滚动计算
+        # 1）收益率标准差，滚动计算
         panel['ret_std' + str(self.window)] = panel['return'].rolling(self.window).std()
-        # 各个股票对benchmark的协方差，滚动计算
-        index = panel['return'][benchmark]
-        panel['ret_cov' + str(self.window)] = panel['return'].rolling(self.window).cov(other=index)
-        # BETA，滚动计算
+        # 2）各个股票对index的协方差，滚动计算
+        index_r = panel['return'][index]
+        panel['ret_cov' + str(self.window)] = panel['return'].rolling(self.window).cov(other=index_r)
+        # 3）BETA，滚动计算
         panel['ret_beta' + str(self.window)] = panel['ret_cov' + str(self.window)] / panel['ret_std' + str(self.window)]
 
         # 截面去极值
@@ -103,6 +105,30 @@ class RETURN(FactorBase):
             r.drop(remove, axis=1, inplace=True)
             df = standard_data(r)
             return df
+
+
+        # 收益率alpha，滚动计算
+        # alpha_J = E(r_s) - [E(r_f) + beta_s_i * (E(r_i) - E(r_f))]
+        panel['ret_mean' + str(self.window)] = panel['return'].rolling(self.window).mean()
+        riskfree_r = panel['return'][riskfree]
+
+        def mul_temp(s):
+            return s * temp
+
+        def add_index_r(s):
+            return s + index_r
+
+        temp = index_r - riskfree_r
+        temp = panel['ret_beta' + str(self.window)].apply(mul_temp, axis=0)
+        temp = temp.apply(add_index_r, axis=0)
+        panel['ret_alpha' + str(self.window)] = panel['ret_mean' + str(self.window)] - temp
+        if self.factor == 'ALPHA':
+            r = panel['ret_alpha' + str(self.window)].copy()
+            r.drop(remove, axis=1, inplace=True)
+            df = standard_data(r)
+            return df
+
+
 
 
             #return df
@@ -134,7 +160,22 @@ if __name__ == '__main__':
 
     factor_kurt120 = RETURN(engine, 'KURTOSIS20', '收益的120日峰度', 14, 'KURTOSIS', 120)
     factor_kurt120.update()
-"""
+
     # BETA因子
     factor_beta20 = RETURN(engine, 'BETA20', '20日beta值，指数使用中证800指数', 14, 'BETA', 20)
     factor_beta20.update()
+
+    factor_beta60 = RETURN(engine, 'BETA60', '60日beta值，指数使用中证800指数', 14, 'BETA', 60)
+    factor_beta20.update()
+
+    factor_beta60 = RETURN(engine, 'BETA120', '120日beta值，指数使用中证800指数', 14, 'BETA', 120)
+    factor_beta60.update()
+
+    factor_beta252 = RETURN(engine, 'BETA252', '252日beta值，指数使用中证800指数', 14, 'BETA', 252)
+    factor_beta252.update()
+    """
+
+    # ALPHA因子
+    factor_alpha20 = RETURN(engine, 'ALPHA20', '20日 Jensen alpha, 指数使用中证500指数，'\
+                                               '无风险利率使用一年期国债CGB1Y', 14, 'ALPHA', 20)
+    factor_alpha20.update()
