@@ -116,5 +116,12 @@ if factor=='ALPHA':
 # sharpe = (E(r_s) - E(r_f))/std_s
 def sub_temp(s):
     return s-temp
-temp = riskfree_r
-panel['ret_sharpe'+str(window)] = panel['ret_mean'+str(window)]
+temp = riskfree_r_mean
+panel['ret_sharpe'+str(window)] = panel['ret_mean'+str(window)].apply(sub_temp, axis=0)/panel['ret_std'+str(window)]
+panel['ret_sharpe'+str(window)][abs(panel['ret_sharpe'+str(window)])>10e10]=np.nan
+if factor=='SHARPERATIO':
+    r = panel['ret_sharpe' + str(window)].copy()
+    r.drop(remove, axis=1, inplace=True)
+    df = standard_data(r)
+    print(df)
+

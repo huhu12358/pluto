@@ -138,6 +138,25 @@ class RETURN(FactorBase):
 
 
 
+        # 收益率sharperatio，滚动计算
+        # todo there is something wrong 'NoneType' object does not support item assignment
+        # sharpe = (E(r_s) - E(r_f))/std_s
+        def sub_temp(s):
+            return s - temp
+
+        temp = riskfree_r_mean
+        panel['ret_sharpe' + str(self.window)] = panel['ret_mean' + str(self.window)].apply(sub_temp, axis=0) \
+                                                 / panel['ret_std' + str(self.window)]
+        panel['ret_sharpe' + str(self.window)][abs(panel['ret_sharpe' + str(self.window)]) > 10e10] = np.nan
+
+        if self.factor == 'SHARPERATIO':
+            r = panel['ret_sharpe' + str(self.window)].copy()
+            r.drop(remove, axis=1, inplace=True)
+            df = standard_data(r)
+            print(df)
+
+
+
 
             #return df
 
@@ -181,9 +200,22 @@ if __name__ == '__main__':
 
     factor_beta252 = RETURN(engine, 'BETA252', '252日beta值，指数使用中证800指数', 14, 'BETA', 252)
     factor_beta252.update()
-    """
+
 
     # ALPHA因子
     factor_alpha20 = RETURN(engine, 'ALPHA20', '20日 Jensen alpha, 指数使用中证500指数，'\
                                                '无风险利率使用一年期国债CGB1Y', 14, 'ALPHA', 20)
     factor_alpha20.update()
+
+    factor_alpha60 = RETURN(engine, 'ALPHA60', '60日 Jensen alpha, 指数使用中证500指数，'\
+                                               '无风险利率使用一年期国债CGB1Y', 14, 'ALPHA', 60)
+    factor_alpha60.update()
+
+    factor_alpha120 = RETURN(engine, 'ALPHA20', '120日 Jensen alpha, 指数使用中证500指数，'\
+                                               '无风险利率使用一年期国债CGB1Y', 14, 'ALPHA', 120)
+    factor_alpha120.update()
+"""
+
+    # sharperatio
+    factor_sharpe20 = RETURN(engine, 'SHARPERATIO20', '20 日 SharpeRatio，无风险利率使用一年期国债CGB1Y', 14, 'SHARPERATIO', 20)
+    factor_sharpe20.update()
