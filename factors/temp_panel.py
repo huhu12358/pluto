@@ -96,17 +96,25 @@ if factor=='BETA':
 # 收益率alpha，滚动计算
 # alpha_J = E(r_s) - [E(r_f) + beta_s_i * (E(r_i) - E(r_f))]
 panel['ret_mean'+str(window)] = panel['return'].rolling(window).mean()
-riskfree_r = panel['return'][riskfree]
+riskfree_r_mean = panel['return'][riskfree].rolling(window).mean()
+index_r_mean = index_r.rolling(window).mean()
 def mul_temp(s):
     return s*temp
-def add_index_r(s):
-    return s+index_r
-temp = index_r-riskfree_r
+def add_index_r_mean(s):
+    return s+index_r_mean
+temp = index_r_mean-riskfree_r_mean
 temp = panel['ret_beta'+str(window)].apply(mul_temp,axis=0)
-temp = temp.apply(add_index_r,axis=0)
+temp = temp.apply(add_index_r_mean,axis=0)
 panel['ret_alpha'+str(window)] = panel['ret_mean'+str(window)]-temp
 if factor=='ALPHA':
     r = panel['ret_alpha' + str(window)].copy()
     r.drop(remove, axis=1, inplace=True)
     df = standard_data(r)
     print(df)
+
+# 收益率sharperatio，滚动计算
+# sharpe = (E(r_s) - E(r_f))/std_s
+def sub_temp(s):
+    return s-temp
+temp = riskfree_r
+panel['ret_sharpe'+str(window)] = panel['ret_mean'+str(window)]

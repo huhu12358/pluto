@@ -109,19 +109,27 @@ class RETURN(FactorBase):
 
         # 收益率alpha，滚动计算
         # alpha_J = E(r_s) - [E(r_f) + beta_s_i * (E(r_i) - E(r_f))]
+        # E(r_s)
         panel['ret_mean' + str(self.window)] = panel['return'].rolling(self.window).mean()
-        riskfree_r = panel['return'][riskfree]
+        # E(r_f)
+        riskfree_r_mean = panel['return'][riskfree].rolling(self.window).mean()
+        # E(r_i)
+        index_r_mean = index_r.rolling(self.window).mean()
 
         def mul_temp(s):
             return s * temp
 
-        def add_index_r(s):
-            return s + index_r
+        def add_index_r_mean(s):
+            return s + index_r_mean
 
-        temp = index_r - riskfree_r
+        temp = index_r_mean - riskfree_r_mean
+        # beta_s_i * (E(r_i) - E(r_f))
         temp = panel['ret_beta' + str(self.window)].apply(mul_temp, axis=0)
-        temp = temp.apply(add_index_r, axis=0)
+        # E(r_f) + beta_s_i * (E(r_i) - E(r_f))
+        temp = temp.apply(add_index_r_mean, axis=0)
+        # # alpha_J = E(r_s) - [E(r_f) + beta_s_i * (E(r_i) - E(r_f))]
         panel['ret_alpha' + str(self.window)] = panel['ret_mean' + str(self.window)] - temp
+
         if self.factor == 'ALPHA':
             r = panel['ret_alpha' + str(self.window)].copy()
             r.drop(remove, axis=1, inplace=True)
