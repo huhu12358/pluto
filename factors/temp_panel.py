@@ -12,7 +12,7 @@ engine = create_engine(
         "mysql+pymysql://hsquant:hs123456@218.1.122.196:3306/factors?charset=utf8&autocommit=true", echo=False
     )
 
-# factors: variance20,
+# factors: name
 #factor = 'VARIANCE'
 #factor = 'KURTOSIS'
 factor = 'SHARPERATIO'
@@ -101,8 +101,10 @@ riskfree_r_mean = panel['return'][riskfree].rolling(window).mean()
 index_r_mean = index_r.rolling(window).mean()
 def mul_temp(s):
     return s*temp
+
 def add_index_r_mean(s):
     return s+index_r_mean
+
 temp = index_r_mean-riskfree_r_mean
 temp = panel['ret_beta'+str(window)].apply(mul_temp,axis=0)
 temp = temp.apply(add_index_r_mean,axis=0)
@@ -120,8 +122,9 @@ def sub_temp(s):
 
 if factor=='SHARPERATIO':
     temp = riskfree_r_mean
-    panel['ret_sharpe' + str(window)] = panel['ret_mean' + str(window)].apply(sub_temp, axis=0) / panel[
-        'ret_std' + str(window)]
+    panel['ret_sharpe' + str(window)] = panel['ret_mean' + str(window)].apply(sub_temp, axis=0)\
+                                        / panel['ret_std' + str(window)]
+    # 截面去极值
     panel['ret_sharpe' + str(window)][abs(panel['ret_sharpe' + str(window)]) > 10e10] = np.nan
     r = panel['ret_sharpe' + str(window)].copy()
     r.drop(remove, axis=1, inplace=True)
@@ -134,10 +137,29 @@ if factor=='SHARPERATIO':
 # treynor = (E(r_s) - E(r_f))/beta
 if factor=='TREYNORRATIO':
     temp = riskfree_r_mean
-    panel['ret_treynor' + str(window)] = panel['ret_mean' + str(window)].apply(sub_temp, axis=0) / panel[
-        'ret_beta' + str(window)]
+    panel['ret_treynor' + str(window)] = panel['ret_mean' + str(window)].apply(sub_temp, axis=0)\
+                                         / panel['ret_beta' + str(window)]
+    # 截面去极值
     panel['ret_treynor' + str(window)][abs(panel['ret_treynor' + str(window)]) > 10e10] = np.nan
     r = panel['ret_treynor' + str(window)].copy()
+    r.drop(remove, axis=1, inplace=True)
+    df = standard_data(r)
+    print(df)
+
+
+# 收益率InformationRatio，滚动计算
+# IR = E(r_s - r_i)/std(r_s - r_i)
+if factor=='INFORMATIONRATIO':
+    temp = index_r
+    # r_s - r_i
+    panel['ret_temp1' + str(window)] = panel['return'].apply(sub_temp, axis=0)
+    # IR = E(r_s - r_i)/std(r_s - r_i)
+    panel['ret_ir' + str(window)] = panel['ret_temp1' + str(window)].rolling(window).mean() \
+                                    - panel['ret_temp1' + str(window)].rolling(window).std()
+    # 截面去极值
+    panel['ret_ir' + str(window)][abs(panel['ret_ir' + str(window)]) > 10e10] = np.nan
+
+    r = panel['ret_ir' + str(window)].copy()
     r.drop(remove, axis=1, inplace=True)
     df = standard_data(r)
     print(df)
