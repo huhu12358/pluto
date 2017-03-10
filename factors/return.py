@@ -48,7 +48,6 @@ from factors_handler import FactorBase
 计算方法：IR = E(r_s - r_i)/std(r_s - r_i)
 
 """
-
 # 规范输出数据
 def standard_data(r):
     df1 = r.stack(level=-1, dropna=True)
@@ -225,7 +224,7 @@ if __name__ == '__main__':
         "mysql+pymysql://hsquant:hs123456@218.1.122.196:3306/factors?charset=utf8&autocommit=true", echo=False
     )
     # todo write factor info
-    """"""
+
     # 方差因子
     factor_var20 = RETURN(engine, 'VARIANCE20', '20日收益方差', 14, 'VARIANCE',20)
     factor_var20.update()
