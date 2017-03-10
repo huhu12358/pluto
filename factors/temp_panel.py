@@ -14,7 +14,8 @@ engine = create_engine(
 
 # factors: variance20,
 #factor = 'VARIANCE'
-factor = 'KURTOSIS'
+#factor = 'KURTOSIS'
+factor = 'SHARPERATIO'
 window = 20
 
 def standard_data(r):
@@ -116,12 +117,27 @@ if factor=='ALPHA':
 # sharpe = (E(r_s) - E(r_f))/std_s
 def sub_temp(s):
     return s-temp
-temp = riskfree_r_mean
-panel['ret_sharpe'+str(window)] = panel['ret_mean'+str(window)].apply(sub_temp, axis=0)/panel['ret_std'+str(window)]
-panel['ret_sharpe'+str(window)][abs(panel['ret_sharpe'+str(window)])>10e10]=np.nan
+
 if factor=='SHARPERATIO':
+    temp = riskfree_r_mean
+    panel['ret_sharpe' + str(window)] = panel['ret_mean' + str(window)].apply(sub_temp, axis=0) / panel[
+        'ret_std' + str(window)]
+    panel['ret_sharpe' + str(window)][abs(panel['ret_sharpe' + str(window)]) > 10e10] = np.nan
     r = panel['ret_sharpe' + str(window)].copy()
     r.drop(remove, axis=1, inplace=True)
     df = standard_data(r)
     print(df)
 
+
+
+# 收益率TreynorRatio，滚动计算
+# treynor = (E(r_s) - E(r_f))/beta
+if factor=='TREYNORRATIO':
+    temp = riskfree_r_mean
+    panel['ret_treynor' + str(window)] = panel['ret_mean' + str(window)].apply(sub_temp, axis=0) / panel[
+        'ret_beta' + str(window)]
+    panel['ret_treynor' + str(window)][abs(panel['ret_treynor' + str(window)]) > 10e10] = np.nan
+    r = panel['ret_treynor' + str(window)].copy()
+    r.drop(remove, axis=1, inplace=True)
+    df = standard_data(r)
+    print(df)
