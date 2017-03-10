@@ -49,7 +49,7 @@ from factors_handler import FactorBase
 
 """
 
-
+# 规范输出数据
 def standard_data(r):
     df1 = r.stack(level=-1, dropna=True)
     df2 = df1.reset_index().rename(columns={'sid': 'sid', 'level_0': 'trade_dt', 0: 'value'})
@@ -59,6 +59,9 @@ def standard_data(r):
 
 
 class RETURN(FactorBase):
+    # 添加两个变量：factor，window
+    #    factor：被计算的因子
+    #    window：rolling的window
     def __init__(self, engine, name, description, category, factor, window):
         super().__init__(engine, name, description, category)
         self.factor = factor
